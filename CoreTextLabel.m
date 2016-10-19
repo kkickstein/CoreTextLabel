@@ -143,6 +143,11 @@ NSString * CoreTextLabelBlockKeyLinkPressed = @"CoreTextLabelBlockKeyLinkPressed
 {
     @synchronized(_html)
     {
+        if(![html isKindOfClass:[NSNull class]] && AF_VALID(html, NSString))
+        {
+            html = [html stringByReplacingOccurrencesOfString:@"&rsquo;"withString:@"'"];
+        }
+        
         _html = html;
         [self setString:[self attributedStringByHTML:html]];
     }
@@ -543,6 +548,12 @@ NSString * CoreTextLabelBlockKeyLinkPressed = @"CoreTextLabelBlockKeyLinkPressed
 
         // Draw every line but the last one (in last column)
         NSUInteger total = (column == pathCount-1) ? count-1 : count;
+        
+        if(count-1 < 0)
+        {
+            total = 0;
+        }
+        
         for (CFIndex i = 0; i < total; i++)
         {
             CGPoint point = CGPointMake(origins[i].x + columnFrame.origin.x, origins[i].y);
