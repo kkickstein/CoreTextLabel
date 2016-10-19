@@ -161,6 +161,8 @@
  */
 @property (nonatomic, readonly) BOOL textIsTruncated;
 
+@property (nonatomic, assign) BOOL isNecessary;
+
 /**
  Create NSMutableAttributedString by HTML string
 

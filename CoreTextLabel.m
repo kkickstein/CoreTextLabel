@@ -117,6 +117,7 @@ NSString * CoreTextLabelBlockKeyLinkPressed = @"CoreTextLabelBlockKeyLinkPressed
     _lineSpacing         = 0.f;
     _textAlignment       = NSTextAlignmentLeft;
     _textIsTruncated     = NO;
+    _isNecessary         = NO;
 }
 
 - (void) dealloc
@@ -129,6 +130,14 @@ NSString * CoreTextLabelBlockKeyLinkPressed = @"CoreTextLabelBlockKeyLinkPressed
 }
 
 #pragma mark - Setter
+- (void) setIsNecessary:(BOOL)isNecessary
+{
+    @synchronized(_string)
+    {
+        _isNecessary = isNecessary;
+        [self setNeedsDisplay];
+    }
+}
 
 - (void) setString:(NSMutableAttributedString *)string
 {
@@ -586,6 +595,12 @@ NSString * CoreTextLabelBlockKeyLinkPressed = @"CoreTextLabelBlockKeyLinkPressed
             CTLineRef longLine = CTLineCreateWithAttributedString((__bridge CFAttributedStringRef)longString);
 
             CTLineRef truncated = CTLineCreateTruncatedLine(longLine, columnFrame.size.width, kCTLineTruncationEnd, truncationToken);
+            
+            NSAttributedString * neededString = [[NSMutableAttributedString alloc] initWithString:@"*" attributes:@{ NSForegroundColorAttributeName : [UIColor orangeColor], NSFontAttributeName: _font }];
+            CTLineRef neededLine = CTLineCreateWithAttributedString((__bridge CFAttributedStringRef) neededString);
+            CTLineRef needed = CTLineCreateTruncatedLine(neededLine, columnFrame.size.width, kCTLineTruncationEnd, truncationToken);
+            CFRelease(neededLine);
+            
             CFRelease(longLine);
             CFRelease(truncationToken);
 
@@ -600,7 +615,20 @@ NSString * CoreTextLabelBlockKeyLinkPressed = @"CoreTextLabelBlockKeyLinkPressed
             {
                 CGContextSetTextPosition(context, lastOrigin.x+columnFrame.origin.x, lastOrigin.y);
                 CTLineDraw(truncated, context);
+                
+                if (_isNecessary)
+                {
+                    CGRect bounds = CTLineGetBoundsWithOptions(truncated, kCTLineBoundsUseGlyphPathBounds);
+                    CGContextSetTextPosition(context, lastOrigin.x+columnFrame.origin.x+bounds.size.width+3, lastOrigin.y+3);
+                    CTLineDraw(needed, context);
+                }
+                
                 CFRelease(truncated);
+            }
+            
+            if (needed)
+            {
+                CFRelease(needed);
             }
 
             _textIsTruncated = YES;
